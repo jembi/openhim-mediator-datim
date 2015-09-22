@@ -1,0 +1,40 @@
+{
+  "urn": "urn:uuid:146c9090-6044-11e5-9d1f-218790ee18c9",
+  "version": "0.1.0",
+  "name": "datim",
+  "description": "Forwards ADX messges and polls for import status then forwards the final response",
+  "defaultChannelConfig": [
+    {
+      "name": "datim",
+      "urlPattern": "/sample-pattern",
+      "alerts": [],
+      "txRerunAcl": [],
+      "txViewFullAcl": [],
+      "txViewAcl": [],
+      "properties": [],
+      "matchContentTypes": [],
+      "routes": [
+        {
+          "name": "datim Route",
+          "host": "localhost",
+          "path": "/ohie/dataValueSets",
+          "port": "3000",
+          "primary": true,
+          "type": "http"
+        }
+      ],
+      "allow": ["admin"],
+      "type": "http"
+    }
+  ],
+  "endpoints": [
+    {
+      "name": "datim Route",
+      "host": "localhost",
+      "path": "/ohie/dataValueSets",
+      "port": "3000",
+      "primary": true,
+      "type": "http"
+    }
+  ]
+}

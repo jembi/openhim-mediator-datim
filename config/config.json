@@ -1,0 +1,8 @@
+{
+  "api": {
+    "username": "root@openhim.org",
+    "password": "password",
+    "apiURL": "https://localhost:8080"
+  },
+  "upstreamEndpoint": "http://localhost:8081/demo/ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code"
+}
