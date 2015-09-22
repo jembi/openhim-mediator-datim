@@ -12,15 +12,8 @@ const mediatorConfig = require('./config/mediator');
 
 // include register script
 const register = require('./register');
-register.registerMediator(apiConfig, mediatorConfig, (err) => {
-  if (err) {
-    console.log('Failed to register this mediator, check your config');
-    console.log(err.stack);
-    process.exit(1);
-  } else {
-    console.log('Successfully registered mediator!');
-  }
 
+function setupAndStartApp() {
   app.post('/', (req, res) => {
 
     req.pipe(request.post(config.upstreamEndpoint, (err, upstreamRes, upstreamBody) => {
@@ -55,12 +48,27 @@ register.registerMediator(apiConfig, mediatorConfig, (err) => {
     }));
   });
 
-  var server = app.listen(3000, function () {
-    var host = server.address().address;
-    var port = server.address().port;
+  let server = app.listen(3000, function () {
+    let host = server.address().address;
+    let port = server.address().port;
     console.log(`DATIM mediator listening on http://${host}:${port}`);
   });
-});
+};
+
+if (config.register) {
+  register.registerMediator(apiConfig, mediatorConfig, (err) => {
+    if (err) {
+      console.log('Failed to register this mediator, check your config');
+      console.log(err.stack);
+      process.exit(1);
+    } else {
+      console.log('Successfully registered mediator!');
+      setupAndStartApp();
+    }
+  });
+} else {
+  setupAndStartApp();
+}
 
 // export app for use in grunt-express module
 module.exports = app;
