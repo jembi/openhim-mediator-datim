@@ -13,6 +13,12 @@
     "taskPath": "api/system/tasks/DATAVALUE_IMPORT",
     "async": true
   },
+  "receiver": {
+    "scheme": "http",
+    "host": "localhost",
+    "port": 8082,
+    "path": "task"
+  },
   "register": true,
   "pollingInterval": 1000
 }

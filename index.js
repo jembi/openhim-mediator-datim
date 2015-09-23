@@ -72,6 +72,23 @@ function setupAndStartApp() {
   });
 }
 
+function forwardResponse(task) {
+  let options = {
+    url: `${config.receiver.scheme}://${config.receiver.host}:${config.receiver.port}/${config.receiver.path}`,
+    key: key,
+    cert: cert,
+    ca: ca,
+    body: task,
+    json: true
+  };
+  request.post(options, (err) => {
+    if (err) {
+      console.log(err.stack);
+    }
+    console.log('Message received by receiver');
+  });
+}
+
 function startPolling() {
   // setup task polling
   var statusInterval = setInterval(() => getImportStatus((err, body) => {
@@ -82,7 +99,7 @@ function startPolling() {
     if (body[0].completed) {
       console.log('Completed, stopping interval');
       clearInterval(statusInterval);
-      // TODO forward to adapter
+      forwardResponse(body[0]);
     }
   }), config.pollingInterval);
 }
@@ -109,6 +126,7 @@ function getImportStatus(callback) {
   });
 }
 
+// start-up procedure
 if (config.register) {
   register.registerMediator(apiConf, mediatorConfig, (err) => {
     if (err) {
@@ -123,6 +141,3 @@ if (config.register) {
 } else {
   setupAndStartApp();
 }
-
-// export app for use in grunt-express module
-module.exports = app;

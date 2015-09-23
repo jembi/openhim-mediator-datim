@@ -6,7 +6,7 @@
   "defaultChannelConfig": [
     {
       "name": "datim",
-      "urlPattern": "/sample-pattern",
+      "urlPattern": "/datim-adx/.*",
       "alerts": [],
       "txRerunAcl": [],
       "txViewFullAcl": [],
@@ -15,9 +15,9 @@
       "matchContentTypes": [],
       "routes": [
         {
-          "name": "datim Route",
+          "name": "DATIM ADX Route",
           "host": "localhost",
-          "path": "/ohie/dataValueSets",
+          "path": "/datim-adx/.",
           "port": "3000",
           "primary": true,
           "type": "http"
@@ -31,7 +31,7 @@
     {
       "name": "datim Route",
       "host": "localhost",
-      "path": "/ohie/dataValueSets",
+      "path": "/datim-adx/.*",
       "port": "3000",
       "primary": true,
       "type": "http"

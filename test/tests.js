@@ -4,7 +4,16 @@ const request = require('request');
 const fs = require('fs');
 const config = require('../config/config');
 config.register = false;
-require('./test-dhis-server');
+config.pollingInterval = 10;
+const testSer = require('./test-servers');
+
+let receiverCalled = false;
+testSer.startUpstreamServer();
+testSer.startRecServer(() => {
+  receiverCalled = true;
+});
+
+// run main app
 require('../index');
 
 let options = {
@@ -15,7 +24,7 @@ let options = {
   }
 };
 
-request.post(options, (err, response, body) => {
+request.post(options, (err, response) => {
   if (err) {
     console.log(err.stack);
     process.exit(1);
@@ -25,6 +34,13 @@ request.post(options, (err, response, body) => {
     process.exit(1);
   }
 
-  console.log('SUCCESS!');
-  process.exit(0);
+  setTimeout(() => {
+    if (receiverCalled) {
+      console.log('SUCCESS!');
+      process.exit(0);
+    } else {
+      console.log('Receiver not called');
+      process.exit(1);
+    }
+  }, 100);
 });
