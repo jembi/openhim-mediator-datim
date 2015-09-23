@@ -36,5 +36,47 @@
       "primary": true,
       "type": "http"
     }
+  ],
+  "configDefs": [
+    {
+      "param": "dhisScheme",
+      "type": "string",
+      "default": "http"
+    },
+    {
+      "param": "dhisHost",
+      "type": "string",
+      "default": "localhost"
+    },
+    {
+      "param": "dhisPort",
+      "type": "number",
+      "default": 8081
+    },
+    {
+      "param": "dhisBasePath",
+      "type": "string",
+      "default": "demo"
+    },
+    {
+      "param": "dhisAdxPath",
+      "type": "string",
+      "default": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code"
+    },
+    {
+      "param": "dhisTaskPath",
+      "type": "string",
+      "default": "api/system/tasks/DATAVALUE_IMPORT"
+    },
+    {
+      "param": "dhisAsync",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "param": "pollingInterval",
+      "type": "number",
+      "default": 1000
+    }
   ]
 }

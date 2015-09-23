@@ -13,7 +13,6 @@
     "taskPath": "api/system/tasks/DATAVALUE_IMPORT",
     "async": true
   },
-  "upstreamEndpoint": "http://localhost:8081/demo/ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
   "register": true,
   "pollingInterval": 1000
 }
