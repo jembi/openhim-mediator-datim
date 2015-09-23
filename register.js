@@ -16,16 +16,15 @@ exports.registerMediator = (apiConfig, mediatorConfig, callback) => {
 
   // authenticate the username
   request.get(`${apiURL}/authenticate/${username}`, (err, resp, body) => {
-    body = JSON.parse(body);
-
     if (err){
       callback(err);
     }
-
     // if user isnt found
     if (resp.statusCode !== 200) {
       callback(new Error(`User ${username} not found when authenticating with core API`));
     }
+
+    body = JSON.parse(body);
 
     // create passhash
     let shasum = crypto.createHash('sha512');

@@ -7,7 +7,8 @@ const app = express();
 
 // get config objects
 const config = require('./config/config');
-const apiConfig = config.api;
+const apiConf = config.api;
+const dhisConf = config.dhis;
 const mediatorConfig = require('./config/mediator');
 
 // include register script
@@ -15,12 +16,17 @@ const register = require('./register');
 
 function setupAndStartApp() {
   app.post('/', (req, res) => {
-
-    req.pipe(request.post(config.upstreamEndpoint, (err, upstreamRes, upstreamBody) => {
+    let url = `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.adxPath}?async=${dhisConf.async}`;
+    console.log(url);
+    req.pipe(request.post(url, (err, upstreamRes, upstreamBody) => {
 
       if (err) {
         console.log(err.stack);
         return;
+      }
+
+      if (dhisConf.async && upstreamRes.statusCode === 200) {
+        startPolling();
       }
 
       var urn = mediatorConfig.urn;
@@ -48,15 +54,47 @@ function setupAndStartApp() {
     }));
   });
 
+  // setup express server
   let server = app.listen(3000, function () {
     let host = server.address().address;
     let port = server.address().port;
     console.log(`DATIM mediator listening on http://${host}:${port}`);
   });
-};
+}
+
+function startPolling() {
+  // setup task polling
+  var statusInterval = setInterval(() => getImportStatus((err, body) => {
+    if (err) {
+      console.log(err.stack);
+    }
+    console.log(`Recieved task status: ${JSON.stringify(body)}`);
+    if (body[0].completed) {
+      console.log('Completed, stopping interval');
+      clearInterval(statusInterval);
+      // TODO forward to adapter
+    }
+  }), config.pollingInterval);
+}
+
+function getImportStatus(callback) {
+  if (!callback) { callback = () => {}; }
+  let url = `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.taskPath}`;
+  request.get(url, (err, res, body) => {
+    if (err) {
+      return callback(err);
+    }
+    try {
+      body = JSON.parse(body);
+      callback(null, body);
+    } catch (err) {
+      callback(err);
+    }
+  });
+}
 
 if (config.register) {
-  register.registerMediator(apiConfig, mediatorConfig, (err) => {
+  register.registerMediator(apiConf, mediatorConfig, (err) => {
     if (err) {
       console.log('Failed to register this mediator, check your config');
       console.log(err.stack);

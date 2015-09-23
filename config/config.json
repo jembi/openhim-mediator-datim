@@ -4,6 +4,16 @@
     "password": "password",
     "apiURL": "https://localhost:8080"
   },
+  "dhis": {
+    "scheme": "http",
+    "host": "localhost",
+    "port": 8081,
+    "basePath": "demo",
+    "adxPath": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
+    "taskPath": "api/system/tasks/DATAVALUE_IMPORT",
+    "async": true
+  },
   "upstreamEndpoint": "http://localhost:8081/demo/ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
-  "register": true
+  "register": true,
+  "pollingInterval": 1000
 }
