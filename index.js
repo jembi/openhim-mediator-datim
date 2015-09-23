@@ -2,6 +2,7 @@
 
 // load modules
 const request = require('request');
+const fs = require('fs');
 const express = require('express');
 const app = express();
 
@@ -14,11 +15,20 @@ const mediatorConfig = require('./config/mediator');
 // include register script
 const register = require('./register');
 
+const key = fs.readFileSync('tls/key.pem');
+const cert = fs.readFileSync('tls/cert.pem');
+const ca = fs.readFileSync('tls/ca.pem');
+
 function setupAndStartApp() {
   app.post('/', (req, res) => {
-    let url = `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.adxPath}?async=${dhisConf.async}`;
-    console.log(url);
-    req.pipe(request.post(url, (err, upstreamRes, upstreamBody) => {
+    let options = {
+      url: `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.adxPath}?async=${dhisConf.async}`,
+      key: key,
+      cert: cert,
+      ca: ca
+    };
+    console.log(options.url);
+    req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
 
       if (err) {
         console.log(err.stack);
@@ -79,8 +89,14 @@ function startPolling() {
 
 function getImportStatus(callback) {
   if (!callback) { callback = () => {}; }
-  let url = `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.taskPath}`;
-  request.get(url, (err, res, body) => {
+
+  let options = {
+    url: `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.taskPath}`,
+    key: key,
+    cert: cert,
+    ca: ca
+  };
+  request.get(options, (err, res, body) => {
     if (err) {
       return callback(err);
     }
