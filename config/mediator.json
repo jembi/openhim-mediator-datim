@@ -40,43 +40,45 @@
   "configDefs": [
     {
       "param": "dhisScheme",
-      "type": "string",
-      "default": "http"
+      "type": "string"
     },
     {
       "param": "dhisHost",
-      "type": "string",
-      "default": "localhost"
+      "type": "string"
     },
     {
       "param": "dhisPort",
-      "type": "number",
-      "default": 8081
+      "type": "number"
     },
     {
       "param": "dhisBasePath",
-      "type": "string",
-      "default": "demo"
+      "type": "string"
     },
     {
       "param": "dhisAdxPath",
-      "type": "string",
-      "default": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code"
+      "type": "string"
     },
     {
       "param": "dhisTaskPath",
-      "type": "string",
-      "default": "api/system/tasks/DATAVALUE_IMPORT"
+      "type": "string"
     },
     {
       "param": "dhisAsync",
-      "type": "bool",
-      "default": true
+      "type": "bool"
     },
     {
       "param": "pollingInterval",
-      "type": "number",
-      "default": 1000
+      "type": "number"
     }
-  ]
+  ],
+  "config": {
+    "dhisScheme": "http",
+    "dhisHost": "localhost",
+    "dhisPort": 8081,
+    "dhisBasePath": "demo",
+    "dhisAdxPath": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
+    "dhisTaskPath": "api/system/tasks/DATAVALUE_IMPORT",
+    "dhisAsync": true,
+    "pollingInterval": 1000
+  }
 }

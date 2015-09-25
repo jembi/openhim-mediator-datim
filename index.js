@@ -12,8 +12,7 @@ const apiConf = config.api;
 const dhisConf = config.dhis;
 const mediatorConfig = require('./config/mediator');
 
-// include register script
-const register = require('./register');
+const utils = require('openhim-mediator-utils');
 
 const key = fs.readFileSync('tls/key.pem');
 const cert = fs.readFileSync('tls/cert.pem');
@@ -128,7 +127,7 @@ function getImportStatus(callback) {
 
 // start-up procedure
 if (config.register) {
-  register.registerMediator(apiConf, mediatorConfig, (err) => {
+  utils.registerMediator(apiConf, mediatorConfig, (err) => {
     if (err) {
       console.log('Failed to register this mediator, check your config');
       console.log(err.stack);
@@ -136,6 +135,12 @@ if (config.register) {
     } else {
       console.log('Successfully registered mediator!');
       setupAndStartApp();
+      apiConf.urn = mediatorConfig.urn;
+      let configEmitter = utils.activateHeartbeat(apiConf);
+      configEmitter.on('config', (config) => {
+        console.log('Received new config!');
+        console.log(JSON.stringify(config));
+      });
     }
   });
 } else {
