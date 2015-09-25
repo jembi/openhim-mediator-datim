@@ -49,7 +49,7 @@ exports.startUpstreamServer = (reqCallback) => {
   });
 
   upstreamServer.listen(8081, () => console.log('listening on 8081...'));
-}
+};
 
 exports.startRecServer = (reqCallback) => {
   if (!reqCallback) { reqCallback = noop; }
@@ -72,7 +72,7 @@ exports.startRecServer = (reqCallback) => {
   });
 
   recServer.listen(8082, () => console.log('listening on 8082...'));
-}
+};
 
 if (!module.parent) {
   exports.startUpstreamServer();
