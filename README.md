@@ -14,3 +14,7 @@ $ npm start
 ```
 
 There is a test server that acts as DHIS2 which you can also run for local testing: `$ node test/test-dhis-server.js`
+
+Then you can test the mediator by running the following from the `test/` directory: `$ curl -d @adx.xml http://localhost:3000`.
+
+There are also some basic automated test that you can run with `npm test`.
