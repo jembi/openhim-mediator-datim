@@ -6,10 +6,9 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 
-// get config objects
-const config = require('./config/config');
-const apiConf = config.api;
-const dhisConf = config.dhis;
+// Config
+var config; // this will vary depending on whats set in openhim-core
+const apiConf = require('./config/config');
 const mediatorConfig = require('./config/mediator');
 
 const utils = require('openhim-mediator-utils');
@@ -21,7 +20,7 @@ const ca = fs.readFileSync('tls/ca.pem');
 function setupAndStartApp() {
   app.post('/', (req, res) => {
     let options = {
-      url: `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.adxPath}?async=${dhisConf.async}`,
+      url: `${config.dhisScheme}://${config.dhisHost}:${config.dhisPort}/${config.dhisBasePath}/${config.dhisAdxPath}?async=${config.dhisAsync}`,
       key: key,
       cert: cert,
       ca: ca
@@ -34,7 +33,7 @@ function setupAndStartApp() {
         return;
       }
 
-      if (dhisConf.async && upstreamRes.statusCode === 200) {
+      if (config.dhisAsync && upstreamRes.statusCode === 200) {
         startPolling();
       }
 
@@ -73,7 +72,7 @@ function setupAndStartApp() {
 
 function forwardResponse(task) {
   let options = {
-    url: `${config.receiver.scheme}://${config.receiver.host}:${config.receiver.port}/${config.receiver.path}`,
+    url: `${config.receiverScheme}://${config.receiverHost}:${config.receiverPort}/${config.receiverPath}`,
     key: key,
     cert: cert,
     ca: ca,
@@ -94,7 +93,7 @@ function startPolling() {
     if (err) {
       console.log(err.stack);
     }
-    console.log(`Recieved task status: ${JSON.stringify(body)}`);
+    console.log(`Received task status: ${JSON.stringify(body)}`);
     if (body[0].completed) {
       console.log('Completed, stopping interval');
       clearInterval(statusInterval);
@@ -107,7 +106,7 @@ function getImportStatus(callback) {
   if (!callback) { callback = () => {}; }
 
   let options = {
-    url: `${dhisConf.scheme}://${dhisConf.host}:${dhisConf.port}/${dhisConf.basePath}/${dhisConf.taskPath}`,
+    url: `${config.dhisScheme}://${config.dhisHost}:${config. dhisPort}/${config.dhisBasePath}/${config.dhisTaskPath}`,
     key: key,
     cert: cert,
     ca: ca
@@ -126,23 +125,36 @@ function getImportStatus(callback) {
 }
 
 // start-up procedure
-if (config.register) {
-  utils.registerMediator(apiConf, mediatorConfig, (err) => {
+if (apiConf.register) {
+  utils.registerMediator(apiConf.api, mediatorConfig, (err) => {
     if (err) {
       console.log('Failed to register this mediator, check your config');
       console.log(err.stack);
       process.exit(1);
-    } else {
-      console.log('Successfully registered mediator!');
-      setupAndStartApp();
-      apiConf.urn = mediatorConfig.urn;
-      let configEmitter = utils.activateHeartbeat(apiConf);
-      configEmitter.on('config', (config) => {
-        console.log('Received new config!');
-        console.log(JSON.stringify(config));
-      });
     }
+    apiConf.api.urn = mediatorConfig.urn;
+    utils.fetchConfig(apiConf.api, (err, newConfig) => {
+      console.log('Received initial config:');
+      console.log(JSON.stringify(newConfig));
+      config = newConfig;
+      if (err) {
+        console.log('Failed to fetch initial config');
+        console.log(err.stack);
+        process.exit(1);
+      } else {
+        console.log('Successfully registered mediator!');
+        setupAndStartApp();
+        let configEmitter = utils.activateHeartbeat(apiConf.api);
+        configEmitter.on('config', (newConfig) => {
+          console.log('Received updated config:');
+          console.log(JSON.stringify(newConfig));
+          config = newConfig;
+        });
+      }
+    });
   });
 } else {
+  // default to config from mediator registration
+  config = mediatorConfig.config;
   setupAndStartApp();
 }

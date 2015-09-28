@@ -4,21 +4,5 @@
     "password": "password",
     "apiURL": "https://localhost:8080"
   },
-  "dhis": {
-    "scheme": "http",
-    "host": "localhost",
-    "port": 8081,
-    "basePath": "demo",
-    "adxPath": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
-    "taskPath": "api/system/tasks/DATAVALUE_IMPORT",
-    "async": true
-  },
-  "receiver": {
-    "scheme": "http",
-    "host": "localhost",
-    "port": 8082,
-    "path": "task"
-  },
-  "register": true,
-  "pollingInterval": 1000
+  "register": true
 }

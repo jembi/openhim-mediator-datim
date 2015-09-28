@@ -27,9 +27,11 @@ exports.startUpstreamServer = (reqCallback) => {
     req.on('data', (chunk) => {
       body += chunk.toString();
     });
-    console.log(`  with body: ${body}`);
 
     req.on('end', () => {
+      if (body) {
+        console.log(`  with body: ${body}`);
+      }
       if (req.url.includes('dataValueSets')) {
         res.writeHead(200, { 'Content-Type': 'application/xml'});
         res.end();
@@ -62,9 +64,9 @@ exports.startRecServer = (reqCallback) => {
     req.on('data', (chunk) => {
       body += chunk.toString();
     });
-    console.log(`  with body: ${body}`);
 
     req.on('end', () => {
+      console.log(`  with body: ${body}`);
       res.writeHead(200, { 'Content-Type': 'application/xml'});
       res.end();
       reqCallback(req, body);

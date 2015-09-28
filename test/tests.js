@@ -4,7 +4,8 @@ const request = require('request');
 const fs = require('fs');
 const config = require('../config/config');
 config.register = false;
-config.pollingInterval = 10;
+const mediatorConfig = require('../config/mediator');
+mediatorConfig.config.pollingInterval = 10;
 const testSer = require('./test-servers');
 
 let receiverCalled = false;
