@@ -39,50 +39,71 @@
   ],
   "configDefs": [
     {
+      "displayName": "Scheme",
+      "description": "The propocol scheme to use when forwarding messages, ie. HTTP or HTTPS",
       "param": "dhisScheme",
-      "type": "string"
+      "type": "option",
+      "values": [ "http", "https" ]
     },
     {
+      "displayName": "Upstream hostname",
+      "description": "The hostname of the system to forward messages to",
       "param": "dhisHost",
       "type": "string"
     },
     {
+      "displayName": "Upstream port",
+      "description": "The port to use to forward messages to",
       "param": "dhisPort",
       "type": "number"
     },
     {
+      "displayName": "Upstream base path",
       "param": "dhisBasePath",
       "type": "string"
     },
     {
+      "displayName": "Upstream ADX path",
       "param": "dhisAdxPath",
       "type": "string"
     },
     {
+      "displayName": "Upstream task polling path",
       "param": "dhisTaskPath",
       "type": "string"
     },
     {
+      "displayName": "Upstream async",
+      "description": "Wheather to send the async parameter when forwaarding messages",
       "param": "dhisAsync",
       "type": "bool"
     },
     {
+      "displayName": "Receiver scheme",
+      "description": "The propocol scheme to use for the system that receivers the final response, ie. HTTP or HTTPS",
       "param": "receiverScheme",
       "type": "string"
     },
     {
+      "displayName": "Receiver hostname",
+      "description": "The hostname of the system that receives the final response",
       "param": "receiverHost",
       "type": "string"
     },
     {
+      "displayName": "Receiver port",
+      "description": "The port of the system receiving the final response",
       "param": "receiverPort",
       "type": "number"
     },
     {
+      "displayName": "Receiver path",
       "param": "receiverPath",
       "type": "string"
     },
     {
+      "displayName": "Task polling interval",
+      "description": "The interval in which to poll for import taks updates",
       "param": "pollingInterval",
       "type": "number"
     }
