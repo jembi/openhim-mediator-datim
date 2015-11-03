@@ -20,7 +20,7 @@ const ca = fs.readFileSync('tls/ca.pem');
 function setupAndStartApp() {
   app.post('/', (req, res) => {
     let options = {
-      url: `${config.dhisScheme}://${config.dhisHost}:${config.dhisPort}/${config.dhisBasePath}/${config.dhisAdxPath}?async=${config.dhisAsync}`,
+      url: `${config.dhisScheme}://${config.dhisUsername}:${config.dhisPassword}@${config.dhisHost}:${config.dhisPort}/${config.dhisBasePath}/${config.dhisAdxPath}?async=${config.dhisAsync}`,
       key: key,
       cert: cert,
       ca: ca

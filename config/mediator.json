@@ -79,6 +79,16 @@
       "type": "bool"
     },
     {
+      "displayName": "Upstream basic auth username",
+      "param": "dhisUsername",
+      "type": "string"
+    },
+    {
+      "displayName": "Upstream basic auth password",
+      "param": "dhisPassword",
+      "type": "string"
+    },
+    {
       "displayName": "Receiver scheme",
       "description": "The propocol scheme to use for the system that receivers the final response, ie. HTTP or HTTPS",
       "param": "receiverScheme",
@@ -117,6 +127,8 @@
     "dhisAdxPath": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
     "dhisTaskPath": "api/system/tasks/DATAVALUE_IMPORT",
     "dhisAsync": false,
+    "dhisUsername": "admin",
+    "dhisPassword": "district",
     "receiverScheme": "http",
     "receiverHost": "localhost",
     "receiverPort": 8082,
