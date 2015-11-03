@@ -33,8 +33,12 @@ function setupAndStartApp() {
         return;
       }
 
-      if (config.dhisAsync && upstreamRes.statusCode === 200) {
-        startPolling();
+      if (config.dhisAsync) {
+        if (upstreamRes.statusCode === 200) {
+          startPolling();
+        }
+      } else {
+        forwardResponse(upstreamBody);
       }
 
       var urn = mediatorConfig.urn;

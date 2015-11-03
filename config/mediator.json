@@ -1,6 +1,6 @@
 {
   "urn": "urn:uuid:146c9090-6044-11e5-9d1f-218790ee18c9",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "name": "datim",
   "description": "Forwards ADX messges and polls for import status then forwards the final response",
   "defaultChannelConfig": [
@@ -82,7 +82,8 @@
       "displayName": "Receiver scheme",
       "description": "The propocol scheme to use for the system that receivers the final response, ie. HTTP or HTTPS",
       "param": "receiverScheme",
-      "type": "string"
+      "type": "option",
+      "values": [ "http", "https" ]
     },
     {
       "displayName": "Receiver hostname",
@@ -115,7 +116,7 @@
     "dhisBasePath": "demo",
     "dhisAdxPath": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
     "dhisTaskPath": "api/system/tasks/DATAVALUE_IMPORT",
-    "dhisAsync": true,
+    "dhisAsync": false,
     "receiverScheme": "http",
     "receiverHost": "localhost",
     "receiverPort": 8082,
