@@ -21,17 +21,22 @@ const ca = fs.readFileSync('tls/ca.pem');
 
 function setupAndStartApp() {
   app.post('*', (req, res) => {
-    let options = {
-      url: `${config.upstreamURL}?async=${config.upstreamAsync}`,
-      key: key,
-      cert: cert,
-      ca: ca
-    };
     let query = url.parse(req.url, true).query;
     let adxAdapterID = null;
     if (query.adxAdapterID) {
       adxAdapterID = query.adxAdapterID;
+      delete query.adxAdapterID;
     }
+    if (config.upstreamAsync === true) {
+      query.async = true;
+    }
+    let options = {
+      url: config.upstreamURL,
+      key: key,
+      cert: cert,
+      ca: ca,
+      qs: query
+    };
     console.log(options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
 
