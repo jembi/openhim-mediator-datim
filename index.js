@@ -1,9 +1,11 @@
 'use strict';
 
 // load modules
-const request = require('request');
-const fs = require('fs');
 const express = require('express');
+const fs = require('fs');
+const request = require('request');
+const url = require('url');
+
 const app = express();
 
 // Config
@@ -18,13 +20,18 @@ const cert = fs.readFileSync('tls/cert.pem');
 const ca = fs.readFileSync('tls/ca.pem');
 
 function setupAndStartApp() {
-  app.post('/', (req, res) => {
+  app.post('*', (req, res) => {
     let options = {
-      url: `${config.dhisScheme}://${config.dhisUsername}:${config.dhisPassword}@${config.dhisHost}:${config.dhisPort}/${config.dhisBasePath}/${config.dhisAdxPath}?async=${config.dhisAsync}`,
+      url: `${config.upstreamURL}?async=${config.dhisAsync}`,
       key: key,
       cert: cert,
       ca: ca
     };
+    let query = url.parse(req.url, true).query;
+    let adxAdapterID = null;
+    if (query.adxAdapterID) {
+      adxAdapterID = query.adxAdapterID;
+    }
     console.log(options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
 
@@ -35,10 +42,10 @@ function setupAndStartApp() {
 
       if (config.dhisAsync) {
         if (upstreamRes.statusCode === 200) {
-          startPolling();
+          startPolling(adxAdapterID);
         }
       } else {
-        forwardResponse(upstreamBody);
+        forwardResponse(upstreamRes.statusCode, upstreamBody, adxAdapterID);
       }
 
       var urn = mediatorConfig.urn;
@@ -74,16 +81,16 @@ function setupAndStartApp() {
   });
 }
 
-function forwardResponse(task) {
+function forwardResponse(statusCode, body, adxAdapterID) {
   let options = {
-    url: `${config.receiverScheme}://${config.receiverHost}:${config.receiverPort}/${config.receiverPath}`,
+    url: config.receiverURL + '/' + adxAdapterID,
     key: key,
     cert: cert,
     ca: ca,
-    body: task,
+    body: { code: statusCode, message: body },
     json: true
   };
-  request.post(options, (err) => {
+  request.put(options, (err) => {
     if (err) {
       console.log(err.stack);
     }
@@ -91,7 +98,7 @@ function forwardResponse(task) {
   });
 }
 
-function startPolling() {
+function startPolling(adxAdapterID) {
   // setup task polling
   var statusInterval = setInterval(() => getImportStatus((err, body) => {
     if (err) {
@@ -101,7 +108,7 @@ function startPolling() {
     if (body[0].completed) {
       console.log('Completed, stopping interval');
       clearInterval(statusInterval);
-      forwardResponse(body[0]);
+      forwardResponse(200, body[0], adxAdapterID);
     }
   }), config.pollingInterval);
 }
@@ -110,7 +117,7 @@ function getImportStatus(callback) {
   if (!callback) { callback = () => {}; }
 
   let options = {
-    url: `${config.dhisScheme}://${config.dhisHost}:${config. dhisPort}/${config.dhisBasePath}/${config.dhisTaskPath}`,
+    url: config.upstreamTaskURL,
     key: key,
     cert: cert,
     ca: ca

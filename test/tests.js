@@ -18,7 +18,7 @@ testSer.startRecServer(() => {
 require('../index');
 
 let options = {
-  url: 'http://localhost:3000',
+  url: 'http://localhost:3000/ohie/dataValueSets?dataElementIdScheme=CODE&adxAdapterID=TW186G9YHc5',
   body: fs.readFileSync('test/adx.xml'),
   headers: {
     'Content-Type': 'application/xml'

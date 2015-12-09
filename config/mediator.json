@@ -1,6 +1,6 @@
 {
   "urn": "urn:uuid:146c9090-6044-11e5-9d1f-218790ee18c9",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "name": "datim",
   "description": "Forwards ADX messges and polls for import status then forwards the final response",
   "defaultChannelConfig": [
@@ -39,77 +39,27 @@
   ],
   "configDefs": [
     {
-      "displayName": "Scheme",
-      "description": "The propocol scheme to use when forwarding messages, ie. HTTP or HTTPS",
-      "param": "dhisScheme",
-      "type": "option",
-      "values": [ "http", "https" ]
-    },
-    {
-      "displayName": "Upstream hostname",
-      "description": "The hostname of the system to forward messages to",
-      "param": "dhisHost",
+      "displayName": "Upstream URL",
+      "description": "The URL to use when forwarding messages (you may supply basic auth details in the URL if nesseccary)",
+      "param": "upstreamURL",
       "type": "string"
     },
     {
-      "displayName": "Upstream port",
-      "description": "The port to use to forward messages to",
-      "param": "dhisPort",
-      "type": "number"
-    },
-    {
-      "displayName": "Upstream base path",
-      "param": "dhisBasePath",
-      "type": "string"
-    },
-    {
-      "displayName": "Upstream ADX path",
-      "param": "dhisAdxPath",
-      "type": "string"
-    },
-    {
-      "displayName": "Upstream task polling path",
-      "param": "dhisTaskPath",
+      "displayName": "Upstream task polling URL",
+      "description": "The URL to use when request task updates (only used if aync is true)",
+      "param": "upsteamTaskURL",
       "type": "string"
     },
     {
       "displayName": "Upstream async",
-      "description": "Wheather to send the async parameter when forwaarding messages",
-      "param": "dhisAsync",
+      "description": "Whether to send the async parameter when forwarding messages",
+      "param": "upstreamAsync",
       "type": "bool"
     },
     {
-      "displayName": "Upstream basic auth username",
-      "param": "dhisUsername",
-      "type": "string"
-    },
-    {
-      "displayName": "Upstream basic auth password",
-      "param": "dhisPassword",
-      "type": "string"
-    },
-    {
-      "displayName": "Receiver scheme",
-      "description": "The propocol scheme to use for the system that receivers the final response, ie. HTTP or HTTPS",
-      "param": "receiverScheme",
-      "type": "option",
-      "values": [ "http", "https" ]
-    },
-    {
-      "displayName": "Receiver hostname",
-      "description": "The hostname of the system that receives the final response",
-      "param": "receiverHost",
-      "type": "string"
-    },
-    {
-      "displayName": "Receiver port",
-      "description": "The port of the system receiving the final response",
-      "param": "receiverPort",
-      "type": "number"
-    },
-    {
-      "displayName": "Receiver path",
-      "param": "receiverPath",
+      "displayName": "Receiver URL",
+      "description": "The URL to use for the system that receivers the final response",
+      "param": "receiverURL",
       "type": "string"
     },
     {
@@ -120,19 +70,10 @@
     }
   ],
   "config": {
-    "dhisScheme": "http",
-    "dhisHost": "localhost",
-    "dhisPort": 8081,
-    "dhisBasePath": "demo",
-    "dhisAdxPath": "ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
-    "dhisTaskPath": "api/system/tasks/DATAVALUE_IMPORT",
-    "dhisAsync": false,
-    "dhisUsername": "admin",
-    "dhisPassword": "district",
-    "receiverScheme": "http",
-    "receiverHost": "localhost",
-    "receiverPort": 8082,
-    "receiverPath": "task",
+    "upstreamURL": "http://localhost:8081/demo/ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
+    "upsteamTaskURL": "http://localhost:8081/demo/api/system/tasks/DATAVALUE_IMPORT",
+    "upstreamAsync": false,
+    "receiverURL": "http://localhost:8082/task",
     "pollingInterval": 1000
   }
 }

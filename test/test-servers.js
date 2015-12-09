@@ -34,7 +34,7 @@ exports.startUpstreamServer = (reqCallback) => {
       }
       if (req.url.includes('dataValueSets')) {
         res.writeHead(200, { 'Content-Type': 'application/xml'});
-        res.end();
+        res.end('Some Body');
         reqCallback(req, body);
       } else if (req.url.includes('tasks')) {
         numTaskReqs++;
