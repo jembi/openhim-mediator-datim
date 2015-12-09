@@ -22,7 +22,7 @@ const ca = fs.readFileSync('tls/ca.pem');
 function setupAndStartApp() {
   app.post('*', (req, res) => {
     let options = {
-      url: `${config.upstreamURL}?async=${config.dhisAsync}`,
+      url: `${config.upstreamURL}?async=${config.upstreamAsync}`,
       key: key,
       cert: cert,
       ca: ca
