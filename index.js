@@ -5,8 +5,11 @@ const express = require('express');
 const fs = require('fs');
 const request = require('request');
 const url = require('url');
+const winston = require('winston');
 
 const app = express();
+winston.clear();
+winston.add(winston.transports.Console, { timestamp: true, colorize: true });
 
 // Config
 var config; // this will vary depending on whats set in openhim-core
@@ -37,11 +40,11 @@ function setupAndStartApp() {
       ca: ca,
       qs: query
     };
-    console.log(options.url);
+    winston.info(options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
 
       if (err) {
-        console.log(err.stack);
+        winston.error(err);
         return;
       }
 
@@ -82,7 +85,8 @@ function setupAndStartApp() {
   let server = app.listen(3000, function () {
     let host = server.address().address;
     let port = server.address().port;
-    console.log(`DATIM mediator listening on http://${host}:${port}`);
+    winston.info(`DATIM mediator listening on http://${host}:${port}`);
+    winston.info('Mediator started with config:', config);
   });
 }
 
@@ -97,9 +101,9 @@ function forwardResponse(statusCode, body, adxAdapterID) {
   };
   request.put(options, (err) => {
     if (err) {
-      console.log(err.stack);
+      winston.error(err);
     }
-    console.log('Message received by receiver');
+    winston.info('Message received by receiver');
   });
 }
 
@@ -107,11 +111,11 @@ function startPolling(adxAdapterID) {
   // setup task polling
   var statusInterval = setInterval(() => getImportStatus((err, body) => {
     if (err) {
-      console.log(err.stack);
+      winston.error(err);
     }
-    console.log(`Received task status: ${JSON.stringify(body)}`);
+    winston.info(`Received task status: ${JSON.stringify(body)}`);
     if (body[0].completed) {
-      console.log('Completed, stopping interval');
+      winston.info('Completed, stopping interval');
       clearInterval(statusInterval);
       forwardResponse(200, body[0], adxAdapterID);
     }
@@ -144,26 +148,26 @@ function getImportStatus(callback) {
 if (apiConf.register) {
   utils.registerMediator(apiConf.api, mediatorConfig, (err) => {
     if (err) {
-      console.log('Failed to register this mediator, check your config');
-      console.log(err.stack);
+      winston.error('Failed to register this mediator, check your config');
+      winston.error(err);
       process.exit(1);
     }
     apiConf.api.urn = mediatorConfig.urn;
     utils.fetchConfig(apiConf.api, (err, newConfig) => {
-      console.log('Received initial config:');
-      console.log(JSON.stringify(newConfig));
+      winston.info('Received initial config:');
+      winston.info(JSON.stringify(newConfig));
       config = newConfig;
       if (err) {
-        console.log('Failed to fetch initial config');
-        console.log(err.stack);
+        winston.error('Failed to fetch initial config');
+        winston.error(err);
         process.exit(1);
       } else {
-        console.log('Successfully registered mediator!');
+        winston.info('Successfully registered mediator!');
         setupAndStartApp();
         let configEmitter = utils.activateHeartbeat(apiConf.api);
         configEmitter.on('config', (newConfig) => {
-          console.log('Received updated config:');
-          console.log(JSON.stringify(newConfig));
+          winston.info('Received updated config:');
+          winston.info(JSON.stringify(newConfig));
           config = newConfig;
         });
       }
