@@ -47,7 +47,7 @@
     {
       "displayName": "Upstream task polling URL",
       "description": "The URL to use when request task updates (only used if aync is true)",
-      "param": "upsteamTaskURL",
+      "param": "upstreamTaskURL",
       "type": "string"
     },
     {
@@ -71,8 +71,8 @@
   ],
   "config": {
     "upstreamURL": "http://localhost:8081/demo/ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
-    "upsteamTaskURL": "http://localhost:8081/demo/api/system/tasks/DATAVALUE_IMPORT",
-    "upstreamAsync": false,
+    "upstreamTaskURL": "http://localhost:8081/demo/api/system/tasks/DATAVALUE_IMPORT",
+    "upstreamAsync": true,
     "receiverURL": "http://localhost:8082/task",
     "pollingInterval": 1000
   }

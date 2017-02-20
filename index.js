@@ -48,7 +48,7 @@ function setupAndStartApp() {
         return;
       }
 
-      if (config.dhisAsync) {
+      if (config.upstreamAsync) {
         if (upstreamRes.statusCode === 200) {
           startPolling(adxAdapterID);
         }
@@ -117,6 +117,7 @@ function startPolling(adxAdapterID) {
     if (body[0].completed) {
       winston.info('Completed, stopping interval');
       clearInterval(statusInterval);
+      // TODO fetch final task processing details
       forwardResponse(200, body[0], adxAdapterID);
     }
   }), config.pollingInterval);
