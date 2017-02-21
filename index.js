@@ -5,8 +5,11 @@ const express = require('express');
 const fs = require('fs');
 const request = require('request');
 const url = require('url');
+const winston = require('winston');
 
 const app = express();
+winston.clear();
+winston.add(winston.transports.Console, { timestamp: true, colorize: true });
 
 // Config
 var config; // this will vary depending on whats set in openhim-core
@@ -21,6 +24,7 @@ const ca = fs.readFileSync('tls/ca.pem');
 
 function setupAndStartApp() {
   app.post('*', (req, res) => {
+    winston.info('Recieved a new request for processing...')
     let query = url.parse(req.url, true).query;
     let adxAdapterID = null;
     if (query.adxAdapterID) {
@@ -37,15 +41,16 @@ function setupAndStartApp() {
       ca: ca,
       qs: query
     };
-    console.log(options.url);
+    winston.info('Piping the request to an upstream server', options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
 
       if (err) {
-        console.log(err.stack);
+        winston.error('Couldn\'t pipe request to upstream server', err);
+        res.status(500).send(err);
         return;
       }
 
-      if (config.dhisAsync) {
+      if (config.upstreamAsync) {
         if (upstreamRes.statusCode === 200) {
           startPolling(adxAdapterID);
         }
@@ -82,11 +87,13 @@ function setupAndStartApp() {
   let server = app.listen(3000, function () {
     let host = server.address().address;
     let port = server.address().port;
-    console.log(`DATIM mediator listening on http://${host}:${port}`);
+    winston.info(`DATIM mediator listening on http://${host}:${port}`);
+    winston.info('Mediator started with config:', config);
   });
 }
 
 function forwardResponse(statusCode, body, adxAdapterID) {
+  winston.info('Forwarding response to receiver...');
   let options = {
     url: config.receiverURL + '/' + adxAdapterID,
     key: key,
@@ -95,25 +102,58 @@ function forwardResponse(statusCode, body, adxAdapterID) {
     body: { code: statusCode, message: body },
     json: true
   };
-  request.put(options, (err) => {
+  request.put(options, (err, res) => {
     if (err) {
-      console.log(err.stack);
+      return winston.error('Unable to forward response to receiver', err);
     }
-    console.log('Message received by receiver');
+    winston.info('Response forwarded to receiver', res.statusCode);
+  });
+}
+
+function fetchTaskSummaries(callback) {
+  winston.info('Fetching task summaries');
+  if (!callback) { callback = () => {}; }
+
+  let options = {
+    url: config.upstreamTaskSummariesURL,
+    key: key,
+    cert: cert,
+    ca: ca,
+    json: true
+  };
+  request.get(options, (err, res, body) => {
+    if (err) {
+      return callback(err);
+    }
+    try {
+      callback(null, body);
+    } catch (err) {
+      callback(err);
+    }
   });
 }
 
 function startPolling(adxAdapterID) {
+  winston.info('Started polling for task status...');
+  let errCount = 0;
   // setup task polling
   var statusInterval = setInterval(() => getImportStatus((err, body) => {
     if (err) {
-      console.log(err.stack);
+      winston.error('Unable to get import status', err);
+      errCount++;
+      if (errCount > config.maxStatusReqErrors) {
+        clearInterval(statusInterval);
+        forwardResponse(500, err, adxAdapterID);
+      }
+      return;
     }
-    console.log(`Received task status: ${JSON.stringify(body)}`);
+    winston.info(`Received task status: ${JSON.stringify(body)}`);
     if (body[0].completed) {
-      console.log('Completed, stopping interval');
+      winston.info('Completed; stop polling');
       clearInterval(statusInterval);
-      forwardResponse(200, body[0], adxAdapterID);
+      fetchTaskSummaries((err, summary) => {
+        forwardResponse(200, { lastTaskStatus: body[0], importSummary: summary }, adxAdapterID);
+      });
     }
   }), config.pollingInterval);
 }
@@ -125,14 +165,14 @@ function getImportStatus(callback) {
     url: config.upstreamTaskURL,
     key: key,
     cert: cert,
-    ca: ca
+    ca: ca,
+    json: true
   };
   request.get(options, (err, res, body) => {
     if (err) {
       return callback(err);
     }
     try {
-      body = JSON.parse(body);
       callback(null, body);
     } catch (err) {
       callback(err);
@@ -144,26 +184,26 @@ function getImportStatus(callback) {
 if (apiConf.register) {
   utils.registerMediator(apiConf.api, mediatorConfig, (err) => {
     if (err) {
-      console.log('Failed to register this mediator, check your config');
-      console.log(err.stack);
+      winston.error('Failed to register this mediator, check your config');
+      winston.error(err);
       process.exit(1);
     }
     apiConf.api.urn = mediatorConfig.urn;
     utils.fetchConfig(apiConf.api, (err, newConfig) => {
-      console.log('Received initial config:');
-      console.log(JSON.stringify(newConfig));
+      winston.info('Received initial config:');
+      winston.info(JSON.stringify(newConfig));
       config = newConfig;
       if (err) {
-        console.log('Failed to fetch initial config');
-        console.log(err.stack);
+        winston.error('Failed to fetch initial config');
+        winston.error(err);
         process.exit(1);
       } else {
-        console.log('Successfully registered mediator!');
+        winston.info('Successfully registered mediator!');
         setupAndStartApp();
         let configEmitter = utils.activateHeartbeat(apiConf.api);
         configEmitter.on('config', (newConfig) => {
-          console.log('Received updated config:');
-          console.log(JSON.stringify(newConfig));
+          winston.info('Received updated config:');
+          winston.info(JSON.stringify(newConfig));
           config = newConfig;
         });
       }
