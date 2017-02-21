@@ -93,7 +93,7 @@ function setupAndStartApp() {
 }
 
 function forwardResponse(statusCode, body, adxAdapterID) {
-  winston.info('Forwarding response to reciever...');
+  winston.info('Forwarding response to receiver...');
   let options = {
     url: config.receiverURL + '/' + adxAdapterID,
     key: key,
@@ -104,7 +104,7 @@ function forwardResponse(statusCode, body, adxAdapterID) {
   };
   request.put(options, (err, res) => {
     if (err) {
-      return winston.error('Unable to forward response to reciever', err);
+      return winston.error('Unable to forward response to receiver', err);
     }
     winston.info('Response forwarded to receiver', res.statusCode);
   });

@@ -56,7 +56,7 @@ exports.startUpstreamServer = (reqCallback) => {
 exports.startRecServer = (reqCallback) => {
   if (!reqCallback) { reqCallback = noop; }
 
-  // reciever server
+  // receiver server
   let recServer = http.createServer((req, res) => {
     console.log(`Recieved a request to ${req.url}`);
     console.log(`  with headers: ${JSON.stringify(req.headers)}`);
