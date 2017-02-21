@@ -32,7 +32,7 @@ exports.startUpstreamServer = (reqCallback) => {
       if (body) {
         console.log(`  with body: ${body}`);
       }
-      if (req.url.includes('dataValueSets')) {
+      if (req.url.includes('dataValueSets') || req.url.includes('taskSummaries')) {
         res.writeHead(200, { 'Content-Type': 'application/xml'});
         res.end('Some Body');
         reqCallback(req, body);

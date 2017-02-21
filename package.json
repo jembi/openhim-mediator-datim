@@ -1,6 +1,6 @@
 {
   "name": "datim-mediator",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "description": "Forwards ADX messges and polls for import status then forwards the final response",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "license": "MPL-2.0",
   "dependencies": {
     "express": "^4.10.0",
-    "openhim-mediator-utils": "^0.2.0",
+    "openhim-mediator-utils": "^0.2.3",
     "request": "^2.62.0",
     "winston": "^2.3.1"
   },

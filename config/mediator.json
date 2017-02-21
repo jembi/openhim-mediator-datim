@@ -1,6 +1,6 @@
 {
   "urn": "urn:uuid:146c9090-6044-11e5-9d1f-218790ee18c9",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "name": "datim",
   "description": "Forwards ADX messges and polls for import status then forwards the final response",
   "defaultChannelConfig": [
@@ -51,6 +51,12 @@
       "type": "string"
     },
     {
+      "displayName": "Upstream task summaries URL",
+      "description": "The URL to use when requesting a task summary once a task has been marked as completed (only used if aync is true)",
+      "param": "upstreamTaskSummariesURL",
+      "type": "string"
+    },
+    {
       "displayName": "Upstream async",
       "description": "Whether to send the async parameter when forwarding messages",
       "param": "upstreamAsync",
@@ -67,13 +73,21 @@
       "description": "The interval in which to poll for import taks updates",
       "param": "pollingInterval",
       "type": "number"
+    },
+    {
+      "displayName": "Task polling max errors",
+      "description": "After this amount of error retrieving the task status we will give up polling",
+      "param": "maxStatusReqErrors",
+      "type": "number"
     }
   ],
   "config": {
     "upstreamURL": "http://localhost:8081/demo/ohie/dataValueSets?dataElementIdScheme=code&orgUnitIdScheme=code",
     "upstreamTaskURL": "http://localhost:8081/demo/api/system/tasks/DATAVALUE_IMPORT",
+    "upstreamTaskSummariesURL": "http://localhost:8081/api/system/taskSummaries/DATAVALUE_IMPORT",
     "upstreamAsync": true,
     "receiverURL": "http://localhost:8082/task",
-    "pollingInterval": 1000
+    "pollingInterval": 1000,
+    "maxStatusReqErrors": 5
   }
 }

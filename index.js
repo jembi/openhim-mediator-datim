@@ -24,6 +24,7 @@ const ca = fs.readFileSync('tls/ca.pem');
 
 function setupAndStartApp() {
   app.post('*', (req, res) => {
+    winston.info('Recieved a new request for processing...')
     let query = url.parse(req.url, true).query;
     let adxAdapterID = null;
     if (query.adxAdapterID) {
@@ -40,11 +41,12 @@ function setupAndStartApp() {
       ca: ca,
       qs: query
     };
-    winston.info(options.url);
+    winston.info('Piping the request to an upstream server', options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
 
       if (err) {
-        winston.error(err);
+        winston.error('Couldn\'t pipe request to upstream server', err);
+        res.status(500).send(err);
         return;
       }
 
@@ -91,6 +93,7 @@ function setupAndStartApp() {
 }
 
 function forwardResponse(statusCode, body, adxAdapterID) {
+  winston.info('Forwarding response to reciever...');
   let options = {
     url: config.receiverURL + '/' + adxAdapterID,
     key: key,
@@ -99,26 +102,58 @@ function forwardResponse(statusCode, body, adxAdapterID) {
     body: { code: statusCode, message: body },
     json: true
   };
-  request.put(options, (err) => {
+  request.put(options, (err, res) => {
     if (err) {
-      winston.error(err);
+      return winston.error('Unable to forward response to reciever', err);
     }
-    winston.info('Message received by receiver');
+    winston.info('Response forwarded to receiver', res.statusCode);
+  });
+}
+
+function fetchTaskSummaries(callback) {
+  winston.info('Fetching task summaries');
+  if (!callback) { callback = () => {}; }
+
+  let options = {
+    url: config.upstreamTaskSummariesURL,
+    key: key,
+    cert: cert,
+    ca: ca,
+    json: true
+  };
+  request.get(options, (err, res, body) => {
+    if (err) {
+      return callback(err);
+    }
+    try {
+      callback(null, body);
+    } catch (err) {
+      callback(err);
+    }
   });
 }
 
 function startPolling(adxAdapterID) {
+  winston.info('Started polling for task status...');
+  let errCount = 0;
   // setup task polling
   var statusInterval = setInterval(() => getImportStatus((err, body) => {
     if (err) {
-      winston.error(err);
+      winston.error('Unable to get import status', err);
+      errCount++;
+      if (errCount > config.maxStatusReqErrors) {
+        clearInterval(statusInterval);
+        forwardResponse(500, err, adxAdapterID);
+      }
+      return;
     }
     winston.info(`Received task status: ${JSON.stringify(body)}`);
     if (body[0].completed) {
-      winston.info('Completed, stopping interval');
+      winston.info('Completed; stop polling');
       clearInterval(statusInterval);
-      // TODO fetch final task processing details
-      forwardResponse(200, body[0], adxAdapterID);
+      fetchTaskSummaries((err, summary) => {
+        forwardResponse(200, { lastTaskStatus: body[0], importSummary: summary }, adxAdapterID);
+      });
     }
   }), config.pollingInterval);
 }
@@ -130,14 +165,14 @@ function getImportStatus(callback) {
     url: config.upstreamTaskURL,
     key: key,
     cert: cert,
-    ca: ca
+    ca: ca,
+    json: true
   };
   request.get(options, (err, res, body) => {
     if (err) {
       return callback(err);
     }
     try {
-      body = JSON.parse(body);
       callback(null, body);
     } catch (err) {
       callback(err);
