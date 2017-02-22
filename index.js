@@ -20,11 +20,17 @@ const utils = require('openhim-mediator-utils');
 
 const key = fs.readFileSync('tls/key.pem');
 const cert = fs.readFileSync('tls/cert.pem');
-const ca = fs.readFileSync('tls/ca.pem');
+let ca = null;
+try {
+  ca = fs.readFileSync('tls/ca.pem');
+  winston.info('ca.pem file found, only trusting CAs from that file');
+} catch (err) {
+  winston.info('No ca.pem file found, using built in CAs');
+}
 
 function setupAndStartApp() {
   app.post('*', (req, res) => {
-    winston.info('Recieved a new request for processing...')
+    winston.info('Recieved a new request for processing...');
     let query = url.parse(req.url, true).query;
     let adxAdapterID = null;
     if (query.adxAdapterID) {
@@ -51,8 +57,10 @@ function setupAndStartApp() {
       }
 
       if (config.upstreamAsync) {
-        if (upstreamRes.statusCode === 200) {
+        if (upstreamRes.statusCode === 200 || upstreamRes.statusCode === 202) {
           startPolling(adxAdapterID);
+        } else {
+          winston.error('Unknown status code recieved: ' + upstreamRes.statusCode);
         }
       } else {
         forwardResponse(upstreamRes.statusCode, upstreamBody, adxAdapterID);
@@ -134,28 +142,30 @@ function fetchTaskSummaries(callback) {
 }
 
 function startPolling(adxAdapterID) {
-  winston.info('Started polling for task status...');
+  winston.info(`Started polling for task status at an interval of ${config.pollingInterval}ms...`);
   let errCount = 0;
   // setup task polling
-  var statusInterval = setInterval(() => getImportStatus((err, body) => {
-    if (err) {
-      winston.error('Unable to get import status', err);
-      errCount++;
-      if (errCount > config.maxStatusReqErrors) {
-        clearInterval(statusInterval);
-        forwardResponse(500, err, adxAdapterID);
+  var statusInterval = setInterval(() => {
+    getImportStatus((err, body) => {
+      if (err) {
+        winston.error('Unable to get import status', err);
+        errCount++;
+        if (errCount > config.maxStatusReqErrors) {
+          clearInterval(statusInterval);
+          forwardResponse(500, err, adxAdapterID);
+        }
+        return;
       }
-      return;
-    }
-    winston.info(`Received task status: ${JSON.stringify(body)}`);
-    if (body[0].completed) {
-      winston.info('Completed; stop polling');
-      clearInterval(statusInterval);
-      fetchTaskSummaries((err, summary) => {
-        forwardResponse(200, { lastTaskStatus: body[0], importSummary: summary }, adxAdapterID);
-      });
-    }
-  }), config.pollingInterval);
+      winston.info(`Received task status: ${JSON.stringify(body)}`);
+      if (body[0].completed) {
+        winston.info('Completed; stop polling');
+        clearInterval(statusInterval);
+        fetchTaskSummaries((err, summary) => {
+          forwardResponse(200, { lastTaskStatus: body[0], importSummary: summary }, adxAdapterID);
+        });
+      }
+    });
+  }, config.pollingInterval);
 }
 
 function getImportStatus(callback) {
