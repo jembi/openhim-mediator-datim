@@ -30,7 +30,7 @@ try {
 
 function setupAndStartApp() {
   app.post('*', (req, res) => {
-    winston.info('Recieved a new request for processing...');
+    winston.info('Received a new request for processing...');
     let query = url.parse(req.url, true).query;
     let adxAdapterID = null;
     if (query.adxAdapterID) {
@@ -49,9 +49,11 @@ function setupAndStartApp() {
     };
     winston.info('Piping the request to an upstream server', options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
+      let status = 'Successful';
 
       if (err) {
         winston.error('Couldn\'t pipe request to upstream server', err);
+        forwardResponse(500, 'Couldn\'t pipe request to upstream server', adxAdapterID);
         res.status(500).send(err);
         return;
       }
@@ -60,14 +62,15 @@ function setupAndStartApp() {
         if (upstreamRes.statusCode === 200 || upstreamRes.statusCode === 202) {
           startPolling(adxAdapterID);
         } else {
-          winston.error('Unknown status code recieved: ' + upstreamRes.statusCode);
+          winston.error('Unknown status code received: ' + upstreamRes.statusCode);
+          forwardResponse(upstreamRes.statusCode, 'Unknown status code received', adxAdapterID);
+          status = 'Failed';
         }
       } else {
         forwardResponse(upstreamRes.statusCode, upstreamBody, adxAdapterID);
       }
 
       var urn = mediatorConfig.urn;
-      var status = 'Successful';
       var response = {
         status: upstreamRes.statusCode,
         headers: upstreamRes.headers,
@@ -161,7 +164,7 @@ function startPolling(adxAdapterID) {
         winston.info('Completed; stop polling');
         clearInterval(statusInterval);
         fetchTaskSummaries((err, summary) => {
-          forwardResponse(200, { lastTaskStatus: body[0], importSummary: summary }, adxAdapterID);
+          forwardResponse(200, { lastTaskStatus: body, importSummary: summary }, adxAdapterID);
         });
       }
     });

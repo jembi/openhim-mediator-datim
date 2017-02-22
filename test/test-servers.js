@@ -21,7 +21,7 @@ exports.startUpstreamServer = (reqCallback) => {
 
   // upstream server
   let upstreamServer = http.createServer((req, res) => {
-    console.log(`Recieved a request to ${req.url}`);
+    console.log(`Received a request to ${req.url}`);
     console.log(`  with headers: ${JSON.stringify(req.headers)}`);
     let body = '';
     req.on('data', (chunk) => {
@@ -58,7 +58,7 @@ exports.startRecServer = (reqCallback) => {
 
   // receiver server
   let recServer = http.createServer((req, res) => {
-    console.log(`Recieved a request to ${req.url}`);
+    console.log(`Received a request to ${req.url}`);
     console.log(`  with headers: ${JSON.stringify(req.headers)}`);
     let body = '';
     req.on('data', (chunk) => {
