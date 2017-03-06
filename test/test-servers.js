@@ -8,8 +8,16 @@ const taskRes = [
     'level': 'INFO',
     'category': 'DATAVALUE_IMPORT',
     'time': '2015-09-02T07:43:14.595+0000',
-    'message': 'Import done',
-    'completed': true
+    'message': 'Processing',
+    'completed': false
+  },
+  {
+    'uid': 'hpiaeMy7wFF',
+    'level': 'INFO',
+    'category': 'DATAVALUE_IMPORT',
+    'time': '2015-09-02T07:45:18.700+0000',
+    'message': 'Processing',
+    'completed': false
   }
 ];
 
@@ -41,8 +49,7 @@ exports.startUpstreamServer = (reqCallback) => {
         res.writeHead(200, { 'Content-Type': 'application/xml'});
         if (numTaskReqs % 3 === 0) {
           taskRes[0].completed = true;
-        } else {
-          taskRes[0].completed = false;
+          taskRes[0].message = 'ADX data import done';
         }
         res.end(JSON.stringify(taskRes));
         reqCallback(req, body);

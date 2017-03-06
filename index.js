@@ -160,7 +160,7 @@ function startPolling(adxAdapterID) {
         return;
       }
       winston.info(`Received task status: ${JSON.stringify(body)}`);
-      if (body[0].completed) {
+      if (body[0].message === 'ADX data import done') {
         winston.info('Completed; stop polling');
         clearInterval(statusInterval);
         fetchTaskSummaries((err, summary) => {
