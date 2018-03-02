@@ -12,8 +12,7 @@ winston.clear();
 winston.add(winston.transports.Console, { timestamp: true, colorize: true });
 
 // Config
-var config = {}; // this will vary depending on whats set in openhim-core
-var mapping;
+var config; // this will vary depending on whats set in openhim-core
 const apiConf = require('./config/config');
 const mediatorConfig = require('./config/mediator');
 
@@ -38,19 +37,11 @@ function setupAndStartApp() {
       adxAdapterID = query.adxAdapterID;
       delete query.adxAdapterID;
     }
-    const clientId = 'adx-adaptor-ug'
-    if (config.mapping) {
-      config.mapping.forEach((map) => {
-        if (map.clientID === clientId) {
-          mapping = map
-        }
-      })
-    } 
-    if (mapping.upstreamAsync === true) {
+    if (config.upstreamAsync === true) {
       query.async = true;
     }
     let options = {
-      url: mapping.upstreamURL,
+      url: config.upstreamURL,
       key: key,
       cert: cert,
       ca: ca,
@@ -67,7 +58,7 @@ function setupAndStartApp() {
         return;
       }
 
-      if (mapping.upstreamAsync) {
+      if (config.upstreamAsync) {
         if (upstreamRes.statusCode === 200 || upstreamRes.statusCode === 202) {
           startPolling(adxAdapterID);
         } else {
@@ -115,7 +106,7 @@ function setupAndStartApp() {
 function forwardResponse(statusCode, body, adxAdapterID) {
   winston.info('Forwarding response to receiver...');
   let options = {
-    url: mapping.receiverURL + '/' + adxAdapterID,
+    url: config.receiverURL + '/' + adxAdapterID,
     key: key,
     cert: cert,
     ca: ca,
@@ -132,10 +123,10 @@ function forwardResponse(statusCode, body, adxAdapterID) {
 
 function fetchTaskSummaries(callback) {
   winston.info('Fetching task summaries');
-  if (!callback) { callback = () => { }; }
+  if (!callback) { callback = () => {}; }
 
   let options = {
-    url: mapping.upstreamTaskSummariesURL,
+    url: config.upstreamTaskSummariesURL,
     key: key,
     cert: cert,
     ca: ca,
@@ -154,7 +145,7 @@ function fetchTaskSummaries(callback) {
 }
 
 function startPolling(adxAdapterID) {
-  winston.info(`Started polling for task status at an interval of ${mapping.pollingInterval}ms...`);
+  winston.info(`Started polling for task status at an interval of ${config.pollingInterval}ms...`);
   let errCount = 0;
   // setup task polling
   var statusInterval = setInterval(() => {
@@ -162,7 +153,7 @@ function startPolling(adxAdapterID) {
       if (err) {
         winston.error('Unable to get import status', err);
         errCount++;
-        if (errCount > mapping.maxStatusReqErrors) {
+        if (errCount > config.maxStatusReqErrors) {
           clearInterval(statusInterval);
           forwardResponse(500, err, adxAdapterID);
         }
@@ -177,14 +168,14 @@ function startPolling(adxAdapterID) {
         });
       }
     });
-  }, mapping.pollingInterval);
+  }, config.pollingInterval);
 }
 
 function getImportStatus(callback) {
-  if (!callback) { callback = () => { }; }
+  if (!callback) { callback = () => {}; }
 
   let options = {
-    url: mapping.upstreamTaskURL,
+    url: config.upstreamTaskURL,
     key: key,
     cert: cert,
     ca: ca,
