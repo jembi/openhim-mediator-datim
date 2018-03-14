@@ -39,6 +39,7 @@ function setupAndStartApp() {
       delete query.adxAdapterID;
     }
     const clientId = req.headers['x-openhim-clientid'];
+    winston.info('clientId****'+clientId);
     if (config.mapping) {
       config.mapping.forEach((map) => {
         if (map.clientID === clientId) {
@@ -111,7 +112,7 @@ function setupAndStartApp() {
     let host = server.address().address;
     let port = server.address().port;
     winston.info(`DATIM mediator listening on http://${host}:${port}`);
-    winston.info('Mediator started with config:', config);
+    //winston.info('Mediator started with config:', config);
   });
 }
 
@@ -226,27 +227,26 @@ if (apiConf.register) {
     }
     apiConf.api.urn = mediatorConfig.urn;
     utils.fetchConfig(apiConf.api, (err, newConfig) => {
-      winston.info('Received initial config:');
-      winston.info(JSON.stringify(newConfig));
-      config = newConfig;
+      //winston.info('Received initial config:');
+      //winston.info(JSON.stringify(newConfig));
+      //config = newConfig;
       if (err) {
-        winston.error('Failed to fetch initial config');
+        //winston.error('Failed to fetch initial config');
         winston.error(err);
         process.exit(1);
       } else {
         winston.info('Successfully registered mediator!');
-        setupAndStartApp();
+        //setupAndStartApp();
         let configEmitter = utils.activateHeartbeat(apiConf.api);
         configEmitter.on('config', (newConfig) => {
-          winston.info('Received updated config:');
-          winston.info(JSON.stringify(newConfig));
-          config = newConfig;
+          //winston.info('Received updated config:');
+          //winston.info(JSON.stringify(newConfig));
+         // config = newConfig;
         });
       }
     });
   });
-} else {
-  // default to config from mediator registration
-  config = mediatorConfig.config;
-  setupAndStartApp();
-}
+}   
+// default to config from mediator registration
+config = mediatorConfig.config;
+setupAndStartApp();
