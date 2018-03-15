@@ -39,7 +39,6 @@ function setupAndStartApp() {
       delete query.adxAdapterID;
     }
     const clientId = req.headers['x-openhim-clientid'];
-    winston.info('clientId****'+clientId);
     if (config.mapping) {
       config.mapping.forEach((map) => {
         if (map.clientID === clientId) {
