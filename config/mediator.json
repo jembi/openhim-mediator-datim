@@ -112,7 +112,7 @@
         "upstreamAsync": true,
         "receiverURL": "http://localhost:8082/task",
         "pollingInterval": 1000,
-        "maxStatusReqErrors": 5
+        "maxStatusReqErrors": 5,
         "instanceID": "UG"
       }
     ]
