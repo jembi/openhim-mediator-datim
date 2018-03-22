@@ -12,7 +12,7 @@ winston.clear();
 winston.add(winston.transports.Console, { timestamp: true, colorize: true });
 
 // Config
-var config; // this will vary depending on whats set in openhim-core
+let config = {}; // this will vary depending on whats set in openhim-core
 const apiConf = require('./config/config');
 const mediatorConfig = require('./config/mediator');
 
@@ -37,11 +37,23 @@ function setupAndStartApp() {
       adxAdapterID = query.adxAdapterID;
       delete query.adxAdapterID;
     }
-    if (config.upstreamAsync === true) {
+    const clientId = req.headers['x-openhim-clientid'];
+    let mapping;
+    if (config.mapping) {
+      config.mapping.forEach((map) => {
+        if (map.clientID === clientId) {
+          mapping = map
+        }
+      })
+    } 
+    if (mapping.upstreamAsync === true) {
       query.async = true;
     }
+    if (mapping.instanceID){
+      query.instanceid = mapping.instanceID;
+    }
     let options = {
-      url: config.upstreamURL,
+      url: mapping.upstreamURL,
       key: key,
       cert: cert,
       ca: ca,
@@ -53,21 +65,21 @@ function setupAndStartApp() {
 
       if (err) {
         winston.error('Couldn\'t pipe request to upstream server', err);
-        forwardResponse(500, 'Couldn\'t pipe request to upstream server', adxAdapterID);
+        forwardResponse(500, 'Couldn\'t pipe request to upstream server', adxAdapterID, mapping);
         res.status(500).send(err);
         return;
       }
 
-      if (config.upstreamAsync) {
+      if (mapping.upstreamAsync) {
         if (upstreamRes.statusCode === 200 || upstreamRes.statusCode === 202) {
-          startPolling(adxAdapterID);
+          startPolling(adxAdapterID, mapping);
         } else {
           winston.error('Unknown status code received: ' + upstreamRes.statusCode);
-          forwardResponse(upstreamRes.statusCode, 'Unknown status code received', adxAdapterID);
+          forwardResponse(upstreamRes.statusCode, 'Unknown status code received', adxAdapterID, mapping);
           status = 'Failed';
         }
       } else {
-        forwardResponse(upstreamRes.statusCode, upstreamBody, adxAdapterID);
+        forwardResponse(upstreamRes.statusCode, upstreamBody, adxAdapterID, mapping);
       }
 
       var urn = mediatorConfig.urn;
@@ -95,7 +107,7 @@ function setupAndStartApp() {
   });
 
   // setup express server
-  let server = app.listen(3000, function () {
+  let server = app.listen(3001, function () {
     let host = server.address().address;
     let port = server.address().port;
     winston.info(`DATIM mediator listening on http://${host}:${port}`);
@@ -103,10 +115,10 @@ function setupAndStartApp() {
   });
 }
 
-function forwardResponse(statusCode, body, adxAdapterID) {
+function forwardResponse(statusCode, body, adxAdapterID, mapping) {
   winston.info('Forwarding response to receiver...');
   let options = {
-    url: config.receiverURL + '/' + adxAdapterID,
+    url: mapping.receiverURL + '/' + adxAdapterID,
     key: key,
     cert: cert,
     ca: ca,
@@ -121,15 +133,20 @@ function forwardResponse(statusCode, body, adxAdapterID) {
   });
 }
 
-function fetchTaskSummaries(callback) {
+function fetchTaskSummaries(callback, mapping) {
   winston.info('Fetching task summaries');
-  if (!callback) { callback = () => {}; }
+  if (!callback) { callback = () => { }; }
 
+  var query;
+  if (mapping.instanceID){
+    query = {instanceid: mapping.instanceID};
+    }
   let options = {
-    url: config.upstreamTaskSummariesURL,
+    url: mapping.upstreamTaskSummariesURL,
     key: key,
     cert: cert,
     ca: ca,
+    qs: query,
     json: true
   };
   request.get(options, (err, res, body) => {
@@ -144,8 +161,8 @@ function fetchTaskSummaries(callback) {
   });
 }
 
-function startPolling(adxAdapterID) {
-  winston.info(`Started polling for task status at an interval of ${config.pollingInterval}ms...`);
+function startPolling(adxAdapterID, mapping) {
+  winston.info(`Started polling for task status at an interval of ${mapping.pollingInterval}ms...`);
   let errCount = 0;
   // setup task polling
   var statusInterval = setInterval(() => {
@@ -153,9 +170,9 @@ function startPolling(adxAdapterID) {
       if (err) {
         winston.error('Unable to get import status', err);
         errCount++;
-        if (errCount > config.maxStatusReqErrors) {
+        if (errCount > mapping.maxStatusReqErrors) {
           clearInterval(statusInterval);
-          forwardResponse(500, err, adxAdapterID);
+          forwardResponse(500, err, adxAdapterID, mapping);
         }
         return;
       }
@@ -164,21 +181,27 @@ function startPolling(adxAdapterID) {
         winston.info('Completed; stop polling');
         clearInterval(statusInterval);
         fetchTaskSummaries((err, summary) => {
-          forwardResponse(200, { lastTaskStatus: body, importSummary: summary }, adxAdapterID);
-        });
+          forwardResponse(200, { lastTaskStatus: body, importSummary: summary }, adxAdapterID, mapping);
+        }, mapping);
       }
-    });
-  }, config.pollingInterval);
+    }, mapping);
+  }, mapping.pollingInterval);
 }
 
-function getImportStatus(callback) {
-  if (!callback) { callback = () => {}; }
+function getImportStatus(callback, mapping) {
+  if (!callback) { callback = () => { }; }
+
+  var query;
+  if (mapping.instanceID){
+    query = {instanceid: mapping.instanceID};
+    }
 
   let options = {
-    url: config.upstreamTaskURL,
+    url: mapping.upstreamTaskURL,
     key: key,
     cert: cert,
     ca: ca,
+    qs: query,
     json: true
   };
   request.get(options, (err, res, body) => {

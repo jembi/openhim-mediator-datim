@@ -5,7 +5,7 @@ const fs = require('fs');
 const config = require('../config/config');
 config.register = false;
 const mediatorConfig = require('../config/mediator');
-mediatorConfig.config.pollingInterval = 10;
+mediatorConfig.config.mapping[0].pollingInterval = 10;
 const testSer = require('./test-servers');
 
 let receiverCalled = false;
