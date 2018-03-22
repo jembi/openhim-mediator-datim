@@ -133,7 +133,7 @@ function forwardResponse(statusCode, body, adxAdapterID, mapping) {
   });
 }
 
-function fetchTaskSummaries(callback, mapping) {
+function fetchTaskSummaries(mapping, callback) {
   winston.info('Fetching task summaries');
   if (!callback) { callback = () => { }; }
 
@@ -188,7 +188,7 @@ function startPolling(adxAdapterID, mapping) {
   }, mapping.pollingInterval);
 }
 
-function getImportStatus(callback, mapping) {
+function getImportStatus(mapping, callback) {
   if (!callback) { callback = () => { }; }
 
   var query;
