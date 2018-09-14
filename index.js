@@ -18,8 +18,8 @@ const mediatorConfig = require('./config/mediator');
 
 const utils = require('openhim-mediator-utils');
 
-const key = fs.readFileSync('tls/key.pem');
-const cert = fs.readFileSync('tls/cert.pem');
+let key = null;
+let cert = null;
 let ca = null;
 try {
   ca = fs.readFileSync('tls/ca.pem');
@@ -27,10 +27,21 @@ try {
 } catch (err) {
   winston.info('No ca.pem file found, using built in CAs');
 }
-
+var taskURL = null;
+var taskSummariesURL = null;
 function setupAndStartApp() {
   app.post('*', (req, res) => {
     winston.info('Received a new request for processing...');
+    delete req.headers['accept-encoding']
+
+    key = fs.readFileSync('tls/key.pem');
+    cert = fs.readFileSync('tls/cert.pem');
+    try {
+      ca = fs.readFileSync('tls/ca.pem');
+      winston.info('ca.pem file found, only trusting CAs from that file');
+    } catch (err) {
+      winston.info('No ca.pem file found, using built in CAs');
+    }
     let query = url.parse(req.url, true).query;
     let adxAdapterID = null;
     if (query.adxAdapterID) {
@@ -45,19 +56,20 @@ function setupAndStartApp() {
           mapping = map
         }
       })
-    } 
+    }
     if (mapping.upstreamAsync === true) {
       query.async = true;
     }
-    if (mapping.instanceID){
+    if (mapping.instanceID) {
       query.instanceid = mapping.instanceID;
     }
     let options = {
-      url: mapping.upstreamURL,
+     url: mapping.upstreamURL,
       key: key,
       cert: cert,
       ca: ca,
-      qs: query
+      qs: query,
+      headers: { 'accept': 'application/json' }
     };
     winston.info('Piping the request to an upstream server', options.url);
     req.pipe(request.post(options, (err, upstreamRes, upstreamBody) => {
@@ -72,6 +84,11 @@ function setupAndStartApp() {
 
       if (mapping.upstreamAsync) {
         if (upstreamRes.statusCode === 200 || upstreamRes.statusCode === 202) {
+          var resBody = JSON.parse(upstreamBody);
+          var processId = resBody['response']['id'];
+          taskURL = mapping.upstreamTaskURL + '/' + processId;
+          taskSummariesURL = mapping.upstreamTaskSummariesURL + '/' + processId;
+
           startPolling(adxAdapterID, mapping);
         } else {
           winston.error('Unknown status code received: ' + upstreamRes.statusCode);
@@ -133,16 +150,16 @@ function forwardResponse(statusCode, body, adxAdapterID, mapping) {
   });
 }
 
-function fetchTaskSummaries(mapping, callback) {
+function fetchTaskSummaries(callback, mapping) {
   winston.info('Fetching task summaries');
   if (!callback) { callback = () => { }; }
 
   var query;
   if (mapping.instanceID){
     query = {instanceid: mapping.instanceID};
-    }
+  }
   let options = {
-    url: mapping.upstreamTaskSummariesURL,
+    url: taskSummariesURL,
     key: key,
     cert: cert,
     ca: ca,
@@ -188,16 +205,16 @@ function startPolling(adxAdapterID, mapping) {
   }, mapping.pollingInterval);
 }
 
-function getImportStatus(mapping, callback) {
+function getImportStatus(callback, mapping) {
   if (!callback) { callback = () => { }; }
 
   var query;
   if (mapping.instanceID){
     query = {instanceid: mapping.instanceID};
-    }
+  }
 
   let options = {
-    url: mapping.upstreamTaskURL,
+    url: taskURL,
     key: key,
     cert: cert,
     ca: ca,
