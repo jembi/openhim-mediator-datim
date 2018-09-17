@@ -27,8 +27,7 @@ try {
 } catch (err) {
   winston.info('No ca.pem file found, using built in CAs');
 }
-var taskURL = null;
-var taskSummariesURL = null;
+
 function setupAndStartApp() {
   app.post('*', (req, res) => {
     winston.info('Received a new request for processing...');
@@ -84,12 +83,12 @@ function setupAndStartApp() {
 
       if (mapping.upstreamAsync) {
         if (upstreamRes.statusCode === 200 || upstreamRes.statusCode === 202) {
-          var resBody = JSON.parse(upstreamBody);
-          var processId = resBody['response']['id'];
-          taskURL = mapping.upstreamTaskURL + '/' + processId;
-          taskSummariesURL = mapping.upstreamTaskSummariesURL + '/' + processId;
+          const resBody = JSON.parse(upstreamBody);
+          const processId = resBody['response']['id'];
+          var taskURL = mapping.upstreamTaskURL + '/' + processId;
+          var taskSummariesURL = mapping.upstreamTaskSummariesURL + '/' + processId;
 
-          startPolling(adxAdapterID, mapping);
+          startPolling(adxAdapterID, taskURL, taskSummariesURL, mapping);
         } else {
           winston.error('Unknown status code received: ' + upstreamRes.statusCode);
           forwardResponse(upstreamRes.statusCode, 'Unknown status code received', adxAdapterID, mapping);
@@ -150,7 +149,7 @@ function forwardResponse(statusCode, body, adxAdapterID, mapping) {
   });
 }
 
-function fetchTaskSummaries(callback, mapping) {
+function fetchTaskSummaries(callback, taskSummariesURL, mapping) {
   winston.info('Fetching task summaries');
   if (!callback) { callback = () => { }; }
 
@@ -178,7 +177,7 @@ function fetchTaskSummaries(callback, mapping) {
   });
 }
 
-function startPolling(adxAdapterID, mapping) {
+function startPolling(adxAdapterID, taskURL, taskSummariesURL, mapping) {
   winston.info(`Started polling for task status at an interval of ${mapping.pollingInterval}ms...`);
   let errCount = 0;
   // setup task polling
@@ -199,13 +198,13 @@ function startPolling(adxAdapterID, mapping) {
         clearInterval(statusInterval);
         fetchTaskSummaries((err, summary) => {
           forwardResponse(200, { lastTaskStatus: body, importSummary: summary }, adxAdapterID, mapping);
-        }, mapping);
+        }, taskSummariesURL, mapping);
       }
-    }, mapping);
+    }, taskURL, mapping);
   }, mapping.pollingInterval);
 }
 
-function getImportStatus(callback, mapping) {
+function getImportStatus(callback, taskURL, mapping) {
   if (!callback) { callback = () => { }; }
 
   var query;
