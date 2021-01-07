@@ -1,5 +1,8 @@
 [![Build Status](https://travis-ci.org/jembi/openhim-mediator-datim.svg?branch=master)](https://travis-ci.org/jembi/openhim-mediator-datim)
 
+**Repo Owner:** Vlad Shioshvili [@vshioshvili](https://github.com/vshioshvili)
+
+
 # DATIM node polling mediator
 
 This mediator is responsible for forwarding ADX requests from DATIM node to DATIM global to be imported. It then polls global for an import status and once the import is completed, it forwards the final response to the ADX adapter where the results are displayed to the user.
