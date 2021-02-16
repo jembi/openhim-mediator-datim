@@ -145,7 +145,7 @@ function forwardResponse(statusCode, body, adxAdapterID, mapping) {
     if (err) {
       return winston.error('Unable to forward response to receiver', err);
     }
-    winston.info('Response forwarded to receiver', res.statusCode);
+    winston.info('Response forwarded to receiver ' + mapping.receiverURL + '/' + adxAdapterID + ` ... ${JSON.stringify(options.body)}`, res.statusCode);
   });
 }
 
@@ -193,13 +193,17 @@ function startPolling(adxAdapterID, taskURL, taskSummariesURL, mapping) {
         return;
       }
       winston.info(`Received task status: ${JSON.stringify(body)}`);
-      if (body[0].message === 'ADX data import done') {
+      let i=0;
+      for(i; i< body.length; i++){
+      if (body[i].message === 'ADX data import done') {
         winston.info('Completed; stop polling');
         clearInterval(statusInterval);
         fetchTaskSummaries((err, summary) => {
           forwardResponse(200, { lastTaskStatus: body, importSummary: summary }, adxAdapterID, mapping);
         }, taskSummariesURL, mapping);
+        break;
       }
+    }
     }, taskURL, mapping);
   }, mapping.pollingInterval);
 }
